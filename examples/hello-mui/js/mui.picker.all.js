@@ -439,8 +439,7 @@
 			var self = this;
 			self.options = options || {};
 			self.options.buttons = self.options.buttons || ['取消', '确定'];
-			self.panel = $.dom(panelBuffer)[0];
-			document.body.appendChild(self.panel);
+            self.isRemove = true;
 			self.ok = self.panel.querySelector('.mui-poppicker-btn-ok');
 			self.cancel = self.panel.querySelector('.mui-poppicker-btn-cancel');
 			self.body = self.panel.querySelector('.mui-poppicker-body');
@@ -448,18 +447,22 @@
 			self.cancel.innerText = self.options.buttons[0];
 			self.ok.innerText = self.options.buttons[1];
 			self.cancel.addEventListener('tap', function(event) {
-				self.hide();
+                var rs = self.celCallback&&self.celCallback()&&true;
+                if (rs !== false) {
+                    self.hide();
+                }
 			}, false);
 			self.ok.addEventListener('tap', function(event) {
-				if (self.callback) {
-					var rs = self.callback(self.getSelectedItems());
-					if (rs !== false) {
-						self.hide();
-					}
-				}
+                var rs = self.suCallback&&self.suCallback(self.getSelectedItems())&&true;
+                if (rs !== false) {
+                    self.hide();
+                }
 			}, false);
 			self.mask[0].addEventListener('tap', function() {
-				self.hide();
+                var rs = self.celCallback&&self.celCallback()&&true;
+                if (rs !== false) {
+                    self.hide();
+                }
 			}, false);
 			self._createPicker();
 			//防止滚动穿透
@@ -508,18 +511,54 @@
 			return items;
 		},
 		//显示
-		show: function(callback) {
+		show: function(sucallback,celcallback) {
 			var self = this;
-			self.callback = callback;
+			self.suCallback = sucallback;
+			self.celCallback = celcallback;
 			self.mask.show();
-			document.body.classList.add($.className('poppicker-active-for-page'));
-			self.panel.classList.add($.className('active'));
-			//处理物理返回键
-			self.__back = $.back;
-			$.back = function() {
-				self.hide();
-			};
+			self.addDom(function(){
+                document.body.classList.add($.className('poppicker-active-for-page'));
+                self.panel.classList.add($.className('active'));
+                //处理物理返回键
+                self.__back = $.back;
+                $.back = function() {
+                    self.hide();
+                };
+            });
+
 		},
+        //移除dom
+        removeDom:function(){
+            var self = this;
+            //判断是否存在
+            if(self.isRemove===false){
+                self.hide();
+                setTimeout(function(){
+                    self.isRemove = true;
+                    self.panel.parentNode.removeChild(self.panel);
+                },300);
+            }
+
+        },
+        //添加dom
+        addDom:function(callback){
+            //判断是否被移除
+            var self=this;
+            if(self.isRemove) {
+                document.body.appendChild(self.panel);
+                self.isRemove=false;
+                //防止滚动穿透
+                self.panel.addEventListener($.EVENT_START, function(event) {
+                    event.preventDefault();
+                }, false);
+                self.panel.addEventListener($.EVENT_MOVE, function(event) {
+                    event.preventDefault();
+                }, false);
+            }
+            setTimeout(function(){
+                callback && typeof callback==="function" &&  callback();
+            },1);
+        },
 		//隐藏
 		hide: function() {
 			var self = this;
@@ -627,6 +666,7 @@
 			var _picker = $.dom(domBuffer)[0];
 			document.body.appendChild(_picker);
 			$('[data-id*="picker"]', _picker).picker();
+            self.isRemove = true;
 			var ui = self.ui = {
 				picker: _picker,
 				mask: $.createMask(),
@@ -640,10 +680,13 @@
 				labels: $('[data-id*="title-"]', _picker),
 			};
 			ui.cancel.addEventListener('tap', function() {
-				self.hide();
+				var rs = self.celCallback(self.getSelected());
+				if (rs !== false) {
+					self.hide();
+				}
 			}, false);
 			ui.ok.addEventListener('tap', function() {
-				var rs = self.callback(self.getSelected());
+				var rs = self.suCallback(self.getSelected());
 				if (rs !== false) {
 					self.hide();
 				}
@@ -669,7 +712,10 @@
 				}
 			}, false);
 			ui.mask[0].addEventListener('tap', function() {
-				self.hide();
+				var rs = self.celCallback(self.getSelected());
+				if (rs !== false) {
+					self.hide();
+				}
 			}, false);
 			self._create(options);
 			//防止滚动穿透
@@ -978,18 +1024,22 @@
 			self.setSelectedValue(options.value);
 		},
 		//显示
-		show: function(callback) {
+		show: function(sucallback,celcallback) {
 			var self = this;
 			var ui = self.ui;
-			self.callback = callback || $.noop;
+			self.suCallback = sucallback || $.noop;
+			self.celCallback = celcallback || $.noop;
 			ui.mask.show();
-			document.body.classList.add($.className('dtpicker-active-for-page'));
-			ui.picker.classList.add($.className('active'));
-			//处理物理返回键
-			self.__back = $.back;
-			$.back = function() {
-				self.hide();
-			};
+            self.addDom(function(){
+                document.body.classList.add($.className('dtpicker-active-for-page'));
+                ui.picker.classList.add($.className('active'));
+                //处理物理返回键
+                self.__back = $.back;
+                $.back = function() {
+                    self.hide();
+                };
+            });
+
 		},
 		hide: function() {
 			var self = this;
@@ -1001,6 +1051,37 @@
 			//处理物理返回键
 			$.back = self.__back;
 		},
+        //移除dom
+        removeDom:function(){
+            var self = this;
+            //判断是否存在
+            if(self.isRemove===false){
+                self.hide();
+                setTimeout(function(){
+                    self.isRemove = true;
+                    self.ui.picker.parentNode.removeChild(self.ui.picker);
+                },300);
+            }
+        },
+        //添加dom
+        addDom:function(callback){
+            //判断是否被移除
+            var self=this;
+            if(self.isRemove===true) {
+                document.body.appendChild(self.ui.picker);
+                self.isRemove=false;
+                //防止滚动穿透
+                self.ui.picker.addEventListener($.EVENT_START, function(event) {
+                    event.preventDefault();
+                }, false);
+                self.ui.picker.addEventListener($.EVENT_MOVE, function(event) {
+                    event.preventDefault();
+                }, false);
+            }
+            setTimeout(function(){
+                callback && typeof callback==="function" &&  callback();
+            },1);
+        },
 		dispose: function() {
 			var self = this;
 			self.hide();
