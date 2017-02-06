@@ -416,6 +416,7 @@
 	var panelBuffer = '<div class="mui-poppicker">\
 		<div class="mui-poppicker-header">\
 			<button class="mui-btn mui-poppicker-btn-cancel">取消</button>\
+			<div class="mui-picker-title"></div>\
 			<button class="mui-btn mui-btn-blue mui-poppicker-btn-ok">确定</button>\
 			<div class="mui-poppicker-clear"></div>\
 		</div>\
@@ -439,13 +440,18 @@
 			var self = this;
 			self.options = options || {};
 			self.options.buttons = self.options.buttons || ['取消', '确定'];
+			self.options.title = self.options.title||"";
 			self.isRemove = true;
+			self.panel = $.dom(panelBuffer)[0];
+			document.body.appendChild(self.panel);
 			self.ok = self.panel.querySelector('.mui-poppicker-btn-ok');
 			self.cancel = self.panel.querySelector('.mui-poppicker-btn-cancel');
+			self.title = self.panel.querySelector('.mui-picker-title');
 			self.body = self.panel.querySelector('.mui-poppicker-body');
 			self.mask = $.createMask();
 			self.cancel.innerText = self.options.buttons[0];
 			self.ok.innerText = self.options.buttons[1];
+			self.title.innerText=self.options.title;
 			self.cancel.addEventListener('tap', function(event) {
 				var rs = self.celCallback&&self.celCallback()&&true;
 				if (rs !== false) {
@@ -493,6 +499,12 @@
 					}
 				}, false);
 			}
+		},
+		//设定头部文字
+		setTitle:function(title){
+			var self = this;
+			self.options.title = title
+			self.title.innerText=self.options.title;
 		},
 		//填充数据
 		setData: function(data) {
@@ -612,6 +624,7 @@
 	var domBuffer = '<div class="mui-dtpicker" data-type="datetime">\
 		<div class="mui-dtpicker-header">\
 			<button data-id="btn-cancel" class="mui-btn">取消</button>\
+			<div data-id="header-title" class="mui-picker-title"></div>\
 			<button data-id="btn-ok" class="mui-btn mui-btn-blue">确定</button>\
 		</div>\
 		<div class="mui-dtpicker-title"><h5 data-id="title-y">年</h5><h5 data-id="title-m">月</h5><h5 data-id="title-d">日</h5><h5 data-id="title-h">时</h5><h5 data-id="title-i">分</h5></div>\
@@ -671,6 +684,7 @@
 				picker: _picker,
 				mask: $.createMask(),
 				ok: $('[data-id="btn-ok"]', _picker)[0],
+				title:$('[data-id="header-title"]',_picker)[0],
 				cancel: $('[data-id="btn-cancel"]', _picker)[0],
 				y: $('[data-id="picker-y"]', _picker)[0],
 				m: $('[data-id="picker-m"]', _picker)[0],
@@ -987,6 +1001,7 @@
 			options.labels = options.labels || ['年', '月', '日', '时', '分'];
 			options.buttons = options.buttons || ['取消', '确定'];
 			options.type = options.type || 'datetime';
+			options.title=options.title||'';
 			options.customData = options.customData || {};
 			self.options = options;
 			var now = new Date();
@@ -1022,6 +1037,14 @@
 			self._createMinutes();
 			//设定默认值
 			self.setSelectedValue(options.value);
+		},
+		//设定头部文字
+		setTitle:function(title){
+			var self = this;
+			var ui = self.ui;
+			var options = self.options;
+			options.title = title;
+			ui.title.innerText = options.title;
 		},
 		//显示
 		show: function(sucallback,celcallback) {
